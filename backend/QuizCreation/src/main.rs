@@ -55,7 +55,9 @@ struct Questiondoc
     Ans:String,
     explanation:String,
     difficulty:String,
-    question_type:String
+    question_type:String,
+    title:String,
+    code:String
 
 }
 #[derive(serde::Serialize,Deserialize)]
@@ -66,7 +68,8 @@ struct Request
     Anything_Else:String,
     QUESTION_TYPES:String,
     sets:String,
-    difficulty:String
+    difficulty:String,
+    code:String
 }
 
 #[tokio::main]
@@ -93,7 +96,7 @@ async fn main()
 #[stateful]
 async fn quiz(x:AppState<Mydb>,Json(v):Json<Request>)->impl IntoResponse
 {
-   let QUIZ_DESCRIPTION = v.Description;
+   let QUIZ_DESCRIPTION = v.Description.clone();
 let TOTAL_QUESTIONS = v.Total_Questions;
 let ANYTHING_ELSE = v.Anything_Else;
 let QUESTION_TYPES =v.QUESTION_TYPES;
@@ -187,6 +190,8 @@ Output JSON format must strictly be:
                 {
                     let res:Option<Questiondoc>=x.db.create("Question").content(Questiondoc{
                         qid:id.clone(),
+                        title:v.Description.clone(),
+                        code:v.code.clone(),
                         set:count,
                         question:q.question.clone(),
                         options:q.options.clone(),

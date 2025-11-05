@@ -30,7 +30,7 @@ export const SparklesText = ({
   children,
   colors = { first: "#9E7AFF", second: "#FE8BBB" },
   className,
-  sparklesCount = 10,
+  sparklesCount = 5,
   ...props
 }) => {
   const [sparkles, setSparkles] = useState([]);
@@ -71,7 +71,7 @@ export const SparklesText = ({
 
   return (
     <div
-      className={cn("text-6xl font-bold", className)}
+      className={cn("text-5xl font-bold", className)}
       {...props}
       style={
         {

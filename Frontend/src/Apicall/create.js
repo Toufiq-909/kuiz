@@ -135,3 +135,24 @@ export async function login(email,password)
     }
     
 }
+
+export async function checktoken()
+{
+    let token=localStorage.getItem("token");
+    if(token==null)
+    {
+        return false;
+    }
+    else
+    {
+        let resp=await fetch("http://localhost:3000/verifyjwt?token="+localStorage.getItem("token"));
+        if(resp.status==200)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
