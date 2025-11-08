@@ -25,6 +25,7 @@ dependencies = [
  "serde_json",
  "surrealdb",
  "tokio",
+ "tower-http",
  "uuid",
 ]
 

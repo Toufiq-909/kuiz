@@ -7,7 +7,6 @@ use axum::{
 };
 use serde_json::json;
 use reqwest::Client;
-
 use serde::Deserialize;
 use surrealdb::engine::any;
 use surrealdb::opt::auth::Root;
@@ -17,6 +16,7 @@ use app_state::{AppState,AppStateTrait,InitAppState,stateful};
 use uuid::Uuid;
 use dotenv::dotenv;
 use std::env;
+use tower_http::cors::{CorsLayer,Any as we};
 #[derive(Debug, Deserialize,serde::Serialize)]
 struct Set {
     questions: Vec<Question>,
@@ -87,9 +87,9 @@ async fn main()
         db:db
     }.init_app_state();
  
-      
+      let cors=CorsLayer::new().allow_origin(we).allow_methods(we).allow_headers(we);
    
- let app=Router::new().route("/generateQuiz",post(quiz));
+ let app=Router::new().route("/generateQuiz",post(quiz)).layer(cors);
  let listen=tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
  axum::serve(listen,app).await.unwrap();   
 }
@@ -166,11 +166,12 @@ Output JSON format must strictly be:
     .send()
     .await.unwrap().json::<serde_json::Value>().await.unwrap();
    let text = res["candidates"][0]["content"]["parts"][0]["text"]
-        .as_str()
-        .unwrap();
-
-    // Some Gemini responses may include ```json ... ``` fences → strip them
-    let cleaned = text
+        .as_str();
+     match text
+     {
+        Some(_)=>{
+            let text=text.unwrap();
+            let cleaned = text
         .trim()
         .trim_start_matches("```json")
         .trim_start_matches("```")
@@ -179,7 +180,8 @@ Output JSON format must strictly be:
 
     // Deserialize into your Quiz struct
     let quizdata: Result<Quiz,serde_json::Error> = serde_json::from_str(cleaned);
-     match quizdata{
+     match quizdata
+     {
         Ok(Quiz)=>{
             println!("it a success");
             let mut count=1;
@@ -190,33 +192,44 @@ Output JSON format must strictly be:
                 {
                     let res:Option<Questiondoc>=x.db.create("Question").content(Questiondoc{
                         qid:id.clone(),
-                        title:v.Description.clone(),
-                        code:v.code.clone(),
                         set:count,
                         question:q.question.clone(),
                         options:q.options.clone(),
                         Ans:q.correct_answer.clone(),
                         explanation:q.explanation.clone(),
                         difficulty:q.difficulty.clone(),
-                        question_type:q.question_type.clone()
+                        question_type:q.question_type.clone(),
+                        title:v.Description.clone(),
+                        code:v.code.clone()
                     }).await.unwrap();
                 }
                 count=count+1;
                 
             }
-            let res:Option<check>=x.db.create("Sairam").content(check{
-                why:"why not".to_string()
-            }).await.unwrap();
+         
 
             (StatusCode::OK,Json(Quiz))
         }
         Err(e)=>{
-            println!("sai ram");
             (StatusCode::INTERNAL_SERVER_ERROR,Json(Quiz{set:Vec::new()}))
             
         }
      }
 
+
+        }
+        None=>{
+            println!("Failed");
+            (StatusCode::INTERNAL_SERVER_ERROR,Json(Quiz{set:Vec::new()}))
+
+            
+            
+        }
+     }
+        
+
+    // Some Gemini responses may include ```json ... ``` fences → strip them
+    
     
      
             

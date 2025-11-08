@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -16,26 +15,48 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import {useState,useRef} from "react";
-
+import { generate,generate2 } from "../Apicall/create";
+import {useNavigate} from "react-router-dom"
 export function  Quiz()
 {
-  let [num,snum]=useState("");
-  let index=useRef(0);
+  let num=useRef(0)
   let [check,setcheck]=useState(false);
-  let [nq,setnq]=useState("");
-  let count=useRef(0);
-  let [match,setmatch]=useState(false);
+  let set=useRef("")
   let [fill,setfill]=useState(false);
   let [des,setdes]=useState(false);
   let [m,sm]=useState(false);  
   let [pick,setpick]=useState("");
-  let easyindex=useRef(0);
-  let [easy,seteasy]=useState("");
-  let begindex=useRef(0);
-  let [beg,setbeg]=useState("");
-  let hardindex=useRef(0);
-  let [hard,sethard]=useState("");
   let [questionsmsg,setquestionsmsg]=useState(false);
+  let [setmsg,setsetmsg]=useState(false);
+  let description=useRef("");
+  let code=useRef("");
+  let [msg,s]=useState("");
+   const [levels, setLevels] = useState({
+    easy: 33,
+    medium: 33,
+    hard: 34,
+  });
+  let nav=useNavigate();
+
+  // Helper to rebalance percentages
+  const handleChange = (type, value) => {
+    let newValue = Math.min(100, Math.max(0, value));
+    let others = ["easy", "medium", "hard"].filter((l) => l !== type);
+
+    // Remaining percentage to distribute
+    const remaining = 100 - newValue;
+    const totalOthers = levels[others[0]] + levels[others[1]];
+
+    // Distribute proportionally
+    const updated = {
+      [type]: newValue,
+      [others[0]]: Math.round((levels[others[0]] / totalOthers) * remaining),
+      [others[1]]: 100 - newValue - Math.round((levels[others[0]] / totalOthers) * remaining),
+    };
+
+    setLevels(updated);
+  };
+  
 
 
     return (
@@ -69,48 +90,50 @@ export function  Quiz()
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="des">Describe Your Quiz</Label>
-              <Textarea id="des" type="text" placeholder="Quiz on Cloud Computing" />
+              <Textarea id="des" type="text" placeholder="Quiz on Cloud Computing"  onChange={(event)=>{
+                description.current=event.target.value;
+                s("");
+              }}/>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="number">How Many Questions?</Label>
               <Input id="number" type="text" onChange={(event)=>{
-                if(event.target.value.charAt(index.current)>='0'&& 
-                event.target.value.charAt(index.current)<='9')
-                {
-                  snum(num=>num+event.target.value.charAt(index.current));
-                  console.log(num);
-                  let totalquestions=parseInt(num);
-                  if(totalquestions>50)
+                
+                 s("");
+                  let totalquestions=parseInt(event.target.value);
+                  if(isNaN(totalquestions))
                   {
-                    snum("50");
+                    event.target.value=""
+                  }
+                  console.log(totalquestions);
+                  num.current=totalquestions
+                  if(totalquestions>50 || totalquestions<0)
+                  {
+                    num.current=50
                     setquestionsmsg(true);
                     event.target.value="50"
                   }
-                  index.current=index.current+1;
-                console.log(index.current+"sairam");
+                  else if(event.target.value.length>2)
+                  {
+                    event.target.value=""
+                  }
+                  else
+                  {
+                    setquestionsmsg(false);
+                  }
                 }
-                else{
-                  event.target.value=num;
-                }
-              
-                
-              }}  onKeyDown={(event)=>{
-                if(event.key==="Backspace")
-                {
-                  console.log("asdfasd");
-                  snum(num=>num.substring(0,num.length-1));
-                  index.current=Math.max(0, index.current - 1);
-                  console.log(index.current);
-                }
-
-              }}/>
-             
+              }/>
               {questionsmsg &&
-              <p>hello</p>
-
-
+              <p className={"text-yellow-400"}>Maximum 50 questions per Quiz!</p>
               }
-              
+            </div>
+            <div className
+            ="grid gap-2">
+              <Label htmlFor="code">Secret Code</Label>
+              <Input id="code" type="text" placeholder="This code ensures only invited users can join your quiz" onChange={(event)=>{
+                code.current=event.target.value;
+                s("");
+              }}/>
             </div>
             <div className="flex items-center gap-3 bgred-900">
         <Checkbox id="further" onClick={()=>{
@@ -124,13 +147,13 @@ export function  Quiz()
         <div className="grid gap-2">
               <Label>You Can Also Add:</Label>
               <div className={"flex justify-around"}>
-                <Button className={"cursor-pointer "+(fill ? "dark:bg-blue-600 dark:hover:bg-blue-600 ":"")+
+                <Button className={"  cursor-pointer "+(fill ? "dark:bg-blue-600 dark:hover:bg-blue-600 ":"")+
                 (fill ? "bg-purple-300 hover:bg-purple-300":"")} 
                 type="button" variant={"secondary"} onClick={()=>{
                   setfill(prev=>!prev);
 
                   
-                }}>Fill in the Blank</Button>
+                }}>MCQ</Button>
                 <Button type="button" variant={"secondary"} className={"cursor-pointer "+(des ? "dark:bg-blue-600 dark:hover:bg-blue-600 ":"")+
                 (des ? "bg-purple-300 hover:bg-purple-300":"")} onClick={()=>{
                   setdes(prev=>!prev);
@@ -143,43 +166,41 @@ export function  Quiz()
                   sm(prev=>!prev);
 
                   
-                }}>MCQ</Button>
-                <Button type="button" variant={"secondary"} className={"cursor-pointer "+(match ? "dark:bg-blue-600 dark:hover:bg-blue-600 ":"")+
-                (match ? "bg-purple-300 hover:bg-purple-300":"")} 
-                onClick={()=>{
-                  setmatch(prev=>!prev);
-
-                  
-                }}>Match the following</Button>
+                }}>Fill in the Blank</Button>
+               
               </div>
               
             </div>
         <div className="grid gap2">
           <Label htmlFor="nq" className="mb-2">Total Quiz Sets</Label>
               <Input id="nq" type="text" onChange={(event)=>{
-                if(event.target.value.charAt(count.current)>='0'&& 
-                event.target.value.charAt(count.current)<='9')
-                {
-                  setnq(nq+event.target.value.charAt(count.current));
-                  console.log(nq);
-                  count.current=count.current+1;
-                console.log(count.current+"sairam");
-                }
-                else{
-                  event.target.value=nq;
-                }
-              
+ let setf=parseInt(event.target.value);
+                  if(isNaN(setf))
+                  {
+                    event.target.value=""
+                  }
+                  console.log(setf);
+                  set.current=setf
+                  if(setf>10 || setf<0)
+                  {
+                    set.current=10
+                    setsetmsg(true);
+                    event.target.value="10"
+                  }
+                  else if(event.target.value.length>2)
+                  {
+                    event.target.value=""
+                  }
+                  else
+                  {
+                    setsetmsg(false);
+                  }
                 
-              }}  onKeyDown={(event)=>{
-                if(event.key==="Backspace")
-                {
-                  console.log("asdfasd");
-                  setnq(nq=>nq.substring(0,nq.length-1));
-                  count.current=Math.max(0,count.current - 1);
-                  console.log(count.current);
-                }
-
               }}/>
+
+              {setmsg &&
+              <p className={"text-yellow-400"}>Maximum 10 unique Set's are allowed!</p>
+              }
           </div>
 
          <div className="grid gap-2">
@@ -226,90 +247,139 @@ export function  Quiz()
               </Button>
             </div>
               <div className="py-3 flex items-center text-xs text-gray-400 uppercase before:flex-1 before:border-t before:border-gray-200 before:me-4 after:flex-1 after:border-t after:border-gray-200 after:ms-4">Or</div>
-              <div className="grid gap-2">
-              <Label >Easy Questions</Label>
-            <Input id="easy" type="text" onChange={(event)=>{
-                if(event.target.value.charAt(easyindex.current)>='0'&& 
-                event.target.value.charAt(easyindex.current)<='9')
-                {
-                  seteasy(easy+event.target.value.charAt(easyindex.current));
-                  console.log(easy);
-                  easyindex.current=easyindex.current+1;
-                console.log(easyindex.current+"sairam");
-                }
-                else{
-                  event.target.value=easy;
-                }
-              
-                
-              }}  onKeyDown={(event)=>{
-                if(event.key==="Backspace")
-                {
-                  console.log("asdfasd");
-                  seteasy(easy=>easy.substring(0,easy.length-1));
-                  easyindex.current=Math.max(0,easyindex.current - 1);
-                  console.log(easyindex.current);
-                }
+             
 
-              }}/>
-              
-            </div>
-               <div className="grid gap-2">
-              <Label >Medium Questions</Label>
-            <Input  type="text" onChange={(event)=>{
-                if(event.target.value.charAt(begindex.current)>='0'&& 
-                event.target.value.charAt(begindex.current)<='9')
-                {
-                  setbeg(beg+event.target.value.charAt(begindex.current));
-                  console.log(beg);
-                  begindex.current=begindex.current+1;
-                console.log(begindex.current+"sairam");
-                }
-                else{
-                  event.target.value=beg;
-                }                        
-              }}  onKeyDown={(event)=>{
-                if(event.key==="Backspace")
-                {
-                  console.log("asdfasd");
-                  setbeg(beg=>beg.substring(0,beg.length-1));
-                  begindex.current=Math.max(0,begindex.current - 1);
-                  console.log(begindex.current);
-                }
-              }}/>
-            </div>
-               <div className="grid gap-2">
-              <Label >Hard Questions</Label>
-            <Input  type="text" onChange={(event)=>{
-                if(event.target.value.charAt(hardindex.current)>='0'&& 
-                event.target.value.charAt(hardindex.current)<='9')
-                {
-                  sethard(hard+event.target.value.charAt(hardindex.current));
-                  console.log(hard);
-                  hardindex.current=hardindex.current+1;
-                console.log(hardindex.current+"sairam");
-                }
-                else{
-                  event.target.value=hard;
-                }
-              }}  onKeyDown={(event)=>{
-                if(event.key==="Backspace")
-                {
-                  console.log("asdfasd");
-                  sethard(hard=>hard.substring(0,hard.length-1));
-                  hardindex.current=Math.max(0,hardindex.current - 1);
-                  console.log(hardindex.current);
-                }
-              }}/>
-            </div>
+              <div className="flex flex-col gap-6 max-w-lg mx-auto p-6  bg-white w-[100%] rounded-2xl dark:bg-neutral-900 font-white">
+      <h2 className="text-xl font-semibold mb-2 text-center">Set Difficulty Distribution</h2>
+
+      {["easy", "medium", "hard"].map((level) => (
+        <div key={level} className="flex flex-col gap-2">
+          <label className="capitalize flex justify-between">
+            <span>{level}:</span>
+            <span>{levels[level]}%</span>
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={levels[level]}
+            onChange={(e) => handleChange(level, Number(e.target.value))}
+            className="w-full accent-blue-500 cursor-pointer"
+          />
+        </div>
+      ))}
+
+      
+    </div>
+            
+
+            
         </>
       }
           </div>
         </form>
       </CardContent>
       <CardFooter>
-        <RainbowButton className="w-full">Create Instantly</RainbowButton>
+        <RainbowButton className="w-full" onClick={async ()=>{
+          s("")
+         let res;
+          if(!check)
+          {
+             res=await generate(description.current,num.current,code.current);
+            if(res==400)
+            {
+              s("Invalid Details")
+
+            }
+            else if(res==401)
+            {
+              s("Weak Code!")
+
+            }
+            else if(res==500)
+            {
+              s("Erron in Generating Quiz,please try again")
+            }
+            else
+            {
+              s("Quiz has been generated Successfully");
+              setTimeout(()=>{
+                nav(
+                  "/select"
+                )
+
+              },3000)
+            }
+
+
+          }
+          else
+          {
+            //showing questions
+            
+            if(pick==="")
+            {
+              pick=levels.easy+"% easy "+levels.medium+"% medium "+levels.hard+"% hard";
+              res=await generate2(description.current,num.current,code.current,fill,des,m,set.current,pick)
+            }
+            else if(pick==="beg")
+            {
+               pick="80% easy 20% medium"
+                  res=await generate2(description.current,num.current,code.current,fill,des,m,set.current,pick)
+            }
+            else if(pick=="cas")
+            {
+               pick="50% easy 40% medium 10% hard"
+                  res=await generate2(description.current,num.current,code.current,fill,des,m,set.current,pick)
+            }
+            else
+            {
+               pick="20% easy 30% medium 50% hard"
+                  res=await generate2(description.current,num.current,code.current,fill,des,m,set.current,pick)
+
+            }
+            if(res==400)
+            {
+              s("Invalid Details")
+
+            }
+            else if(res==401)
+            {
+              s("Weak Code!")
+
+            }
+            else if(res==402)
+            {
+              s("Please Enter number of sets")
+            }
+            else if(res==23)
+            {
+              s("Please Configure difficulty level of the quiz")
+            }
+            else if(res==500)
+            {
+              s("Error in generating quiz,please try again")
+            }
+              else
+            {
+              s("Quiz has been generated Successfully");
+              setTimeout(()=>{
+                nav(
+                  "/select"
+                )
+
+              },3000)
+            }
+            
+
+          }
+          
+
+        }}>Create Instantly</RainbowButton>
       </CardFooter>
+      
+        <p className={"text-yellow-400 text-center"}>{msg}</p>
+      
     </Card>
         </div>          
   </>

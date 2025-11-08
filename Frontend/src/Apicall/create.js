@@ -1,4 +1,6 @@
 import {z} from "zod";
+const api=import.meta.env.VITE_API_Auth;
+const api2=import.meta.env.VITE_API_Quiz;
 export async function  check(a,b)
 {
 
@@ -12,7 +14,7 @@ export async function  check(a,b)
     })
     if(result.success)
     {
-          let res=await fetch("http://localhost:3000/check",{
+          let res=await fetch(api+"/check",{
         method:"POST",
         headers:{
             "Content-Type":"application/json"
@@ -23,7 +25,7 @@ export async function  check(a,b)
     }) 
          if(res.status==200)
          {
-            let res1=await fetch("http://localhost:3000/otp",{
+            let res1=await fetch(api+"/otp",{
                 method:"POST",
                 headers:{
                     "Content-Type":"application/json"
@@ -60,7 +62,7 @@ export async function  check(a,b)
 }
 export async function verify(email,password,otp)
 {
-    let resp=await fetch("http://localhost:3000/verify",{
+    let resp=await fetch(api+"/verify",{
         method:"POST",
         headers:{
             "Content-Type":"application/json"
@@ -85,7 +87,7 @@ export async function verify(email,password,otp)
 }
 export async function Sendagain(email)
 {
-    let resp=await fetch("http://localhost:3000/updateotp",{
+    let resp=await fetch(api+"/updateotp",{
         method:"POST",
         headers:{
             "Content-Type":"application/json"
@@ -110,7 +112,7 @@ export async function login(email,password)
     if(result.success)
     {
 
-        let resp=await fetch("http://localhost:3000/signin",{
+        let resp=await fetch(api+"/signin",{
         method:"POST",
         headers:{
             "Content-Type":"application/json"
@@ -145,7 +147,7 @@ export async function checktoken()
     }
     else
     {
-        let resp=await fetch("http://localhost:3000/verifyjwt?token="+localStorage.getItem("token"));
+        let resp=await fetch(api+"/verifyjwt?token="+localStorage.getItem("token"));
         if(resp.status==200)
         {
             return true;
@@ -153,6 +155,117 @@ export async function checktoken()
         else
         {
             return false;
+        }
+    }
+}
+export async function generate(des,n,code)
+{
+    
+    if(des.length<5 || parseInt(n)<5)
+    {
+        return 400;
+    }
+    else if(code.length<2)
+    {
+        return 401;
+    }
+    else
+    {
+      
+
+        let resp=await fetch(api2+"/generateQuiz",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+    Description:des,
+    Total_Questions:n.toString(),
+    Anything_Else:"No",
+    QUESTION_TYPES:"",
+    difficulty:"40 % easy 20% hard 40 % medium",
+    sets:"1",
+    code:code
+})
+        })
+        if(resp.status==200)
+        {
+            let res=await resp.json();
+            return res;
+
+        }
+        else
+        {
+        return resp.status;
+        }
+       
+    }
+}
+
+export async function  generate2(des,n,code,fill,p,m,set,pick)
+{
+if(des.length<5 || parseInt(n)<5)
+    {
+        return 400;
+    }
+    else if(code.length<2)
+    {
+        return 401;
+    }
+    else if(set=="")
+    {
+        return 402;
+    }
+    else if(pick=="")
+    {
+        return 23;
+    }
+    else
+    {
+
+        let type="";
+        if(fill)
+            {
+                type="Multiple correct answers"
+            }
+            if(p)
+            {
+                type=type+" short_answer"
+            }
+            if(m)
+            {
+                type=type+" fill in the blanks"
+
+            }
+          
+
+       
+
+
+        let resp=await fetch(api2+"/generateQuiz",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+    Description:des,
+    Total_Questions:n.toString(),
+    Anything_Else:"Yes",
+    QUESTION_TYPES:type,
+    difficulty:pick,
+    sets:set.toString(),
+    code:code
+})
+        })
+        if(resp.status==200)
+        {
+            let res=await resp.json();
+            return res;
+
+        }
+        else
+        {
+        return resp.status;
         }
     }
 }

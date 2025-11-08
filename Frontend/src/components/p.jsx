@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+const api3=import.meta.env.VITE_API_PA;
 
 const QuizApp = () => {
-  const API_BASE = "http://localhost:5000/api";
+  
+  const API_BASE = api3+"/api";
 
   const [quizzes, setQuizzes] = useState([]);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
