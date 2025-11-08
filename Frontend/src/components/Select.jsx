@@ -83,18 +83,18 @@ export const projects = [
  {
   title: "Create Quiz",
   description: "Design and publish engaging quizzes with ease — set questions, answers, and share instantly.",
-  link: "http://localhost:5173/quiz",
+  link: "https://kuiz-phi.vercel.app/quiz",
 }
 ,
   {
   title: "Take Quiz",
   description: "Join live or scheduled quizzes, test your knowledge, and challenge your friends in real time.",
-  link: "http://localhost:5173/participate",
+  link: "https://kuiz-phi.vercel.app/participate",
 },
   {
   title: "View Analysis",
   description: "Track performance, view detailed results, and gain insights from your quiz history.",
-  link: "http://localhost:5173/analysis",
+  link: "https://kuiz-phi.vercel.app/analysis",
 },
   
 ];
