@@ -84,7 +84,9 @@ pub async fn Otps(State(db):State<Arc<Surreal<Any>>>,Json(v):Json<User>)->impl I
    match Sendmail(otp.to_string(),v.email).await
    {
          Ok(_)=>StatusCode::OK,
-         Err(e)=>StatusCode::INTERNAL_SERVER_ERROR
+         Err(e)=>{
+            println!("{}",e);
+            StatusCode::INTERNAL_SERVER_ERROR}
    }
 }
 #[axum::debug_handler]
