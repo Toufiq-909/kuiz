@@ -180,7 +180,7 @@ pub async fn Sendmail(otp:String,email:String)->Result<(),String>
         .build();
    match mailer.send(&email) {
         Ok(_) => Ok(()),
-        Err(e) =>Err("could not send the mail".to_string()) ,
+        Err(e) =>Err(e.to_string()) ,
                 }
 }
 pub  fn Getjwt(id:String)->String
